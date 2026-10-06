@@ -6,9 +6,9 @@
     <!-- Librería de comunicación en tiempo real -->
     <script src="https://socket.io"></script>
     
-    <!-- Librería de Mapas Corregida -->
-    <link rel="stylesheet" href="https://unpkg.com" crossorigin=""/>
-    <script src="https://unpkg.com" crossorigin=""></script>
+    <!-- Librería de Mapas ultra estable -->
+    <link rel="stylesheet" href="https://unpkg.com" />
+    <script src="https://unpkg.com"></script>
     
     <style>
         html, body { 
@@ -25,13 +25,13 @@
             top: 0;
             left: 0;
             z-index: 1;
-            background-color: #e5e3df; /* Color gris de fondo mientras carga */
+            background-color: #eee;
         }
         #log-panel {
             position: absolute; 
             top: 20px; 
             left: 20px; 
-            z-index: 1000; /* Obliga al cuadro a flotar por encima del mapa */
+            z-index: 1000;
             background: white; 
             padding: 15px; 
             border-radius: 8px;
@@ -53,26 +53,26 @@
 
     <script>
         // Tu URL de Render confirmada
-        const RENDER_URL = "https://app-sos-seguridad.onrender.com"; 
+        const RENDER_URL = "https://onrender.com"; 
 
         // Conectar con el servidor remoto
         const socket = io(RENDER_URL);
         
-        // Inicializar el mapa de forma segura
+        // Inicializar el mapa centrado de forma segura
         const map = L.map('map', {
             center: [-16.500, -68.119],
-            zoom: 13,
-            zoomControl: true
+            zoom: 13
         });
         
-        // Servidor alternativo y ultra estable de mapas (OpenStreetMap estándar)
-        L.tileLayer('https://openstreetmap.org{z}/{x}/{y}.png', {
-            maxZoom: 19,
-            attribution: '© OpenStreetMap'
+        // SERVIDOR DE RESPALDO ULTRA ESTABLE (ESTILO GOOGLE MAPS)
+        L.tileLayer('https://{s}://{z}/{x}/{y}{r}.png', {
+            attribution: '© OpenStreetMap © CARTODB',
+            subdomains: 'abcd',
+            maxZoom: 20
         }).addTo(map);
 
-        // Forzar al mapa a recalcular sus dimensiones físicas en la pantalla
-        setTimeout(() => { map.invalidateSize(); }, 500);
+        // Forzar al mapa a renderizarse físicamente
+        setTimeout(() => { map.invalidateSize(); }, 300);
 
         let markers = {};
         const listContainer = document.getElementById('alerts-list');
