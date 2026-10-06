@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Panel Super Usuario - Monitor SOS en Vivo</title>
+    <!-- Librería de comunicación en tiempo real -->
+    <script src="https://socket.io"></script>
+    
+    <!-- Librería de Mapas Corregida -->
+    <link rel="stylesheet" href="https://unpkg.com" crossorigin=""/>
+    <script src="https://unpkg.com" crossorigin=""></script>
+    
+    <style>
+        html, body { 
+            margin: 0; 
+            padding: 0; 
+            height: 100%; 
+            width: 100%; 
+            overflow: hidden;
+        }
+        #map { 
+            height: 100vh; 
+            width: 100vw; 
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1;
+            background-color: #e5e3df; /* Color gris de fondo mientras carga */
+        }
+        #log-panel {
+            position: absolute; 
+            top: 20px; 
+            left: 20px; 
+            z-index: 1000; /* Obliga al cuadro a flotar por encima del mapa */
+            background: white; 
+            padding: 15px; 
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3); 
+            width: 260px;
+        }
+        h3 { margin-top: 0; color: #d9534f; font-family: Arial, sans-serif; }
+        .alert-item { padding: 6px; border-bottom: 1px solid #eee; font-size: 13px; font-family: Arial, sans-serif; }
+    </style>
+</head>
+<body>
+
+    <div id="log-panel">
+        <h3>🚨 Alertas Activas</h3>
+        <div id="alerts-list">Esperando señales SOS...</div>
+    </div>
+    
+    <div id="map"></div>
+
+    <script>
+        // Tu URL de Render confirmada
+        const RENDER_URL = "https://app-sos-seguridad.onrender.com"; 
+
+        // Conectar con el servidor remoto
+        const socket = io(RENDER_URL);
+        
+        // Inicializar el mapa de forma segura
+        const map = L.map('map', {
+            center: [-16.500, -68.119],
+            zoom: 13,
+            zoomControl: true
+        });
+        
+        // Servidor alternativo y ultra estable de mapas (OpenStreetMap estándar)
+        L.tileLayer('https://openstreetmap.org{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '© OpenStreetMap'
+        }).addTo(map);
+
+        // Forzar al mapa a recalcular sus dimensiones físicas en la pantalla
+        setTimeout(() => { map.invalidateSize(); }, 500);
+
+        let markers = {};
+        const listContainer = document.getElementById('alerts-list');
+
+        // Escuchar alertas entrantes
+        socket.on('admin_receive_alert', (data) => {
+            const pos = [data.latitude, data.longitude];
+            
+            listContainer.innerHTML = `<div class="alert-item">
+                <b>Usuario ID:</b> ${data.userId}<br>
+                <b>Estado:</b> <span style="color:red; font-weight:bold;">¡AUXILIO!</span>
+            </div>`;
+
+            if (markers[data.userId]) {
+                markers[data.userId].setLatLng(pos);
+            } else {
+                markers[data.userId] = L.marker(pos).addTo(map)
+                    .bindPopup(`<b>¡EMERGENCIA!</b><br>ID: ${data.userId}`)
+                    .openPopup();
+            }
+            
+            map.setView(pos, 16);
+        });
+
+        // Escuchar cancelaciones
+        socket.on('admin_alert_cancelled', (data) => {
+            if (markers[data.userId]) {
+                map.removeLayer(markers[data.userId]);
+                delete markers[data.userId];
+                listContainer.innerHTML = "Esperando señales SOS...";
+                alert(`Alerta cancelada por el usuario.`);
+            }
+        });
+    </script>
+</body>
+</html>
